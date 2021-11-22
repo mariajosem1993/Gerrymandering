@@ -1,0 +1,4 @@
+`r if (knitr::is_html_output()) '
+# References {-}
+'`
+https://fivethirtyeight.com/features/we-drew-2568-congressional-districts-by-hand-heres-how/

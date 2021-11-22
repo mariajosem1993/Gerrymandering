@@ -1,0 +1,83 @@
+# Introducción 
+En estados unidos las elecciones de congresistas se hacen en distritos uninominales con la misma población. Estos distritos son diseñados cada diez años según la población de cada estado. Este censo se llevo acabo en el 2020. Por lo que los distritos están por reajustarse. Este reajuste se puede hacer siguiendo distintos criterios. El blog fivethirtyeight define ocho maneras que esto se puede hacer: 
+“-1.Los límites actuales del Congreso
+Hicimos cada uno de los otros siete con un objetivo diferente en mente:
+-2. Distritos de Gerrymander para favorecer a los republicanos
+-3. Distritos de Gerrymander para favorecer a los demócratas
+-4. Emparejar el desglose de los escaños por parte de los partidos con el electorado
+-5. Promover elecciones altamente competitivas
+-6. Maximizar el número de distritos mayoritarios y minoritarios
+-7.Hacer que las formas de los distritos sean compactas (usando un algoritmo)
+-8.Hacer que los distritos sean compactos respetando las fronteras del condado.”(Fivethirty eight) 
+Cabe definir Gerrymander como diseñar un distrito que favorezca explícitamente a un partido político.  Esto se puede evaluar teniendo en cuenta la cantidad de votos depreciados por partido político, la probabilidad de cada partido, la composición racial y los limites territoriales.
+# Analisis Exploratorio 
+Cargamos librerias
+```{r warning=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(readr)
+```
+Cargamos datos de _Fivethirtyeight_
+```{r message=FALSE, warning=FALSE, include=FALSE}
+states <- read_csv("states.csv")
+districts <- read_csv("districts.csv")
+```
+Unimos las base de datos por lo que tenemos 
+```{r}
+dt<-merge(x = districts, y = states, by = "state")
+```
+Quitamos columnas no importantes
+```{r}
+dt <- select(dt,-c(statefp.x, maptype.x, current_map,impossible,statefp.y))
+dt$compactness_rank<-as.character(dt$compactness_rank)
+```
+```{r}
+states %>%
+  filter(!is.na(compactness_rank)) %>% 
+ggplot(aes(compactness_rank,fill=maptype))+
+  geom_bar()+labs(title = "Ranking de nivel de compacto de los distritos",x="Ranking",
+                  y="Cantitad",fill="Tipo de mapa")+scale_fill_viridis_d(option = "D")+
+  theme_minimal()
+```
+Si miramos lo compacto de nuestros distritos a medida que aumenta el ranking (dismuyendo su nivel de compacto) podemos concluir esto favorece a los republicanos y a los democratas le sirve uno rango medio en el ranking.
+```{r}
+states %>%
+  filter(!is.na(efficiency_gap_extra_seats)) %>% 
+ggplot(aes(efficiency_gap_extra_seats,fill=maptype))+
+  geom_bar()+labs(title = "Ranking de nivel de compacto de los distritos",x="Ranking",
+                  y="Cantitad",fill="Tipo de mapa")+scale_fill_viridis_d(option = "D")+
+  theme_minimal()
+```
+
+```{r}
+districts %>%
+  filter(!is.na(minority_chance)) %>% 
+ggplot(aes(y=minority_chance,x=maptype,fill=maptype))+
+  geom_boxplot(scale = "area")+labs(title = "Probablidad de la minoria",x="Tipo de mapa", y="Porcentaje de la minoria")+scale_fill_viridis_d(option = "D")+
+  guides(fill=FALSE,x =  guide_axis(angle = 10))+
+  theme_minimal()
+  
+```
+Podemos concluir que la probablidad de la minoria amuenta cuando los mapas son trazados a favor de una mejor relacion mayoria-minoria. El Partido democrata es el mas favorecido cuando la probablidad  de la minoria aumenta.
+```{r}
+states %>%
+  filter(!is.na(county_splits)) %>% 
+ggplot(aes(y=county_splits,x=maptype,fill=maptype))+
+  geom_boxplot(scale = "area")+labs(title = "Cantidad de divisiones de los condados",x="Tipo de mapa", y="cantidad de divisiones")+scale_fill_viridis_d(option = "D")+
+  guides(fill=FALSE,x =  guide_axis(angle = 10))+
+  theme_minimal()
+```
+Cuando observamos la cantidad de veces que se divide un condado el tipo de mapa con mayor divisiones es el diseño con logarismo para ser compacto y que menos divisiones el el mas compacto.
+```{r}
+states %>%
+  filter(!is.na(district_perimeters)) %>% 
+ggplot(aes(y=district_perimeters,x=maptype,fill=maptype))+
+  geom_boxplot(scale = "area")+
+  labs(title = "Perimetro del distrito",x="Tipo de mapa", y="Perimentro")+scale_fill_viridis_d(option = "D")+
+  guides(fill=FALSE,x =  guide_axis(angle = 10))+
+  theme_minimal()
+```
+Si observamos el perimetro del distrito ningun tipo de mapa se ve mas favoricido.
+
+
